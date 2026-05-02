@@ -54,6 +54,7 @@ const offlineMessage = document.getElementById('offline-message');
 let rankings = [];
 let pendingUpvoteId = null;
 let pendingUpvoteOldVotes = null;
+let inFlightUpvotes = new Set();
 
 // Show error message
 function showError(message) {
@@ -184,6 +185,10 @@ function saveUpvoted(id) {
   }
 }
 async function upvote(id) {
+  // Prevent double-clicks during in-flight request
+  if (inFlightUpvotes.has(id)) {
+    return false;
+  }
   if (hasUpvoted(id)) {
     showError('You have already upvoted this entry');
     return false;
@@ -206,6 +211,7 @@ async function upvote(id) {
   const entry = rankings.find(r => r.id === id);
   pendingUpvoteId = id;
   pendingUpvoteOldVotes = entry ? entry.votes : 0;
+  inFlightUpvotes.add(id);
   
   try {
     const docRef = doc(db, 'rankings', id);
@@ -227,6 +233,7 @@ async function upvote(id) {
       btn.disabled = true;
       btn.classList.add('upvoted');
     }
+    inFlightUpvotes.delete(id);
     
     return true;
   } catch (err) {
@@ -236,8 +243,10 @@ async function upvote(id) {
     if (countSpan) {
       countSpan.textContent = previousVotes;
     }
+    inFlightUpvotes.delete(id);
     
     showError('Failed to upvote. Please try again.');
+    inFlightUpvotes.delete(id);
     return false;
   }
 }
