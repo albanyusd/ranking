@@ -52,7 +52,8 @@ const offlineMessage = document.getElementById('offline-message');
 
 // State
 let rankings = [];
-let skipRenderUntil = 0;
+let pendingUpvoteId = null;
+let pendingUpvoteOldVotes = null;
 
 // Show error message
 function showError(message) {
@@ -201,8 +202,10 @@ async function upvote(id) {
     setTimeout(() => btn.classList.remove('pulse'), 300);
   }
   
-  // Skip Firestore re-render for 500ms to preserve animation
-  skipRenderUntil = Date.now() + 500;
+  // Track pending upvote to skip only that specific change
+  const entry = rankings.find(r => r.id === id);
+  pendingUpvoteId = id;
+  pendingUpvoteOldVotes = entry ? entry.votes : 0;
   
   try {
     const docRef = doc(db, 'rankings', id);
@@ -241,6 +244,18 @@ async function upvote(id) {
 
 // Check if rankings data has changed
 function rankingsDataChanged(newRankings) {
+  // If we have a pending upvote, only skip if change is exactly that entry's vote +1
+  if (pendingUpvoteId) {
+    const oldEntry = rankings.find(r => r.id === pendingUpvoteId);
+    const newEntry = newRankings.find(r => r.id === pendingUpvoteId);
+    if (oldEntry && newEntry && newEntry.votes === pendingUpvoteOldVotes + 1) {
+      // Skip this render - it's just our optimistic update coming back
+      pendingUpvoteId = null;
+      pendingUpvoteOldVotes = null;
+      return false;
+    }
+  }
+  
   if (newRankings.length !== rankings.length) return true;
   for (let i = 0; i < newRankings.length; i++) {
     if (newRankings[i].id !== rankings[i].id || newRankings[i].votes !== rankings[i].votes) {
@@ -265,9 +280,6 @@ function subscribeToRankings() {
     q,
     (snapshot) => {
       hideOfflineMessage();
-      
-      // Skip re-render briefly after optimistic update
-      if (Date.now() < skipRenderUntil) return;
       
       const newRankings = [];
       snapshot.forEach((doc) => {
