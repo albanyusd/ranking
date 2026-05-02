@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rank App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">Rank App</h1>
+      <p class="tagline">Add names, gather votes, see who's on top</p>
+    </header>
+
+    <form id="submit-form" class="submit-form">
+      <input 
+        type="text" 
+        id="name-input" 
+        class="name-input" 
+        placeholder="Enter a name to rank..."
+        autocomplete="off"
+      >
+      <button type="submit" class="submit-btn">
+        <span class="btn-icon">+</span>
+      </button>
+    </form>
+
+    <div id="error-message" class="error-message"></div>
+
+    <div id="rankings-list" class="rankings-list"></div>
+
+    <div id="empty-state" class="empty-state">
+      <p>No names yet. Be the first to add one!</p>
+    </div>
+
+    <div id="offline-message" class="offline-message">
+      <p>Unable to connect. Check your internet connection.</p>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
